@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            ul{
+                list-style-type: none;
+            }
+        </style>
+    </head>
+    <body>
+        <form action="" id="message-form">
+            <label for="" id="label">Enter Name:</label>
+            <input type="text" id="message-input">
+            <button type="submit">Send</button>
+        </form>
+
+        <ul id="messages">
+        </ul>
+
+        <form action="" id="get-message-form">
+            <label for="">Get all message:</label>
+            <input type="text" id="get-input">
+            <button type="submit">Get</button>
+        </form>
+
+        <ul id="getmessage"></ul>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.min.js"></script>
+        <script>
+            const socket = io()
+            const form = document.getElementById("message-form")
+            const input = document.getElementById("message-input")
+            const messages = document.getElementById("messages")
+            const label = document.getElementById("label")
+            const getForm = document.getElementById("get-message-form")
+            const getInput = document.getElementById("get-input")
+            const getMessage = document.getElementById("getmessage")
+            let name_set = false
+            let get = false
+            
+            getForm.addEventListener("submit", async function(event){
+                event.preventDefault()
+                const name = getInput.value.trim()
+                getInput.value = ''
+                get = true
+                socket.emit('getMessages',name)
+
+            })
+
+            socket.on("messages", function(messages){
+                if (!get){
+                    return
+                }else{
+                    messages.forEach(message => {
+                        const li = document.createElement('li');
+                        li.textContent = message;
+                        getMessage.appendChild(li);
+                    });
+                    get = false
+                }
+            })
+
+            form.addEventListener("submit", function(event){
+                event.preventDefault()
+                const message = input.value.trim()
+                if (message !== '') {
+                    if (name_set){
+                        socket.emit('message',message);
+                        input.value = '';
+                    }else{
+                        socket.emit('set_username',message)
+                        label.textContent = "Enter Message:"
+                        input.value = ''
+                        name_set = true
+                    }
+
+                }
+            })
+
+            socket.on('message', function(message){
+                const li = document.createElement('li');
+                li.textContent = message;
+                messages.appendChild(li);
+                console.log(message);
+            })
+        </script>
+    </body>
+</html>
